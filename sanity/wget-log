@@ -1,0 +1,11 @@
+--2017-11-26 07:38:18--  https://build.opensuse.org/package/binary/science:HPC/rdma-core?arch=x86_64
+Resolving build.opensuse.org (build.opensuse.org)... 195.135.221.133, 2001:67c:2178:8::12
+Connecting to build.opensuse.org (build.opensuse.org)|195.135.221.133|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 0 [text/html]
+Saving to: ‘rdma-core?arch=x86_64’
+
+rdma-core?arch=x86_64                                 [<=>                                                                                                        ]       0  --.-KB/s               rdma-core?arch=x86_64                                 [ <=>                                                                                                       ]       0  --.-KB/s    in 0s      
+
+2017-11-26 07:38:18 (0.00 B/s) - ‘rdma-core?arch=x86_64’ saved [0/0]
+
