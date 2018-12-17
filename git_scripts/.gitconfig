@@ -1,0 +1,64 @@
+[user]
+        name = Erez Alfasi
+        email = ereza@mellanox.com
+[sendemail]
+	from = Erez Alfasi
+	smtpserver =
+	smtpserverport =
+	confirm = always
+	suppresscc = self
+	thread = true
+	chainreplyto = false
+
+[color]
+        ui = auto
+[color "branch"]
+	current = green
+	local = yellow
+	remote = red
+[color "diff"]
+	meta = yellow bold
+	frag = magenta bold
+	old = red bold
+  	new = green bold
+[color "status"]
+  added = yellow
+  changed = green
+  untracked = cyan
+
+[core]
+        pager = less -r
+        editor = vim
+        whitespace = nowarn
+[merge]
+	tool = vimdiff
+[diff "xxdiff"]
+        command = xxdiff
+
+[log]
+        decorate=true
+[color "decorate"]
+        tag = blue
+[alias]
+        wdiff = diff --word-diff=color --ignore-all-space
+        slog = log --oneline --no-merges
+	co = checkout
+	ru = remote update
+	dc = describe --contains
+	b = branch
+	br = branch -r
+	lg = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --date=relative
+	amr = am --reject
+	cp = cherry-pick -s -x
+	s = status
+	ama = am --abort
+	rh = reset --hard
+	r = remote
+	cfd = clean -fd
+	rv = remote -v
+	acr = "!sh -c 'git ama; git clean -fd; git reset --hard'"
+	fp1 = format-patch -1
+[push]
+	default = simple
+[http]
+	sslverify = false
