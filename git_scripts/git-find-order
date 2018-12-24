@@ -42,22 +42,22 @@ class git_find_order(object):
 		return self.LocalRepo.iter_commits(self.local_range, no_merges=True, reverse=False)
 
 	def get_upstream_tag(self, commit):
-		tag = self.UpstreamRepo.git.describe(["--tags", "--contains" ,commit.hexsha])
+		try:
+			tag = self.UpstreamRepo.git.describe(["--tags", "--contains" ,commit.hexsha])
+		except:
+			return "next branch"
 		return tag.partition("~")[0]
 
 	def get_sorted_list(self):
 		upstream_commits = list(self.get_upstream_commits())
 		local_commits = list(self.get_local_commits())
 		print "Searching for total amount of %d patches" % (len(local_commits))
-		#print "Upstream commits size : %d" % (len(upstream_commits))
 		sorted_dict = dict()
 		for local_commit in local_commits:
 			local_description = (local_commit.summary).split(":", 1)[1]
-			#print "Searching for %s" %(local_description)
 			key = 1
 			for upstream_commit in upstream_commits:
 				if local_description in upstream_commit.summary:
-					#print "Updated sorted_dict[%d] = %s # %s" % (key, upstream_commit, upstream_commit.summary)
 					sorted_dict[key] = upstream_commit
 					break
 				key = key + 1
