@@ -30,6 +30,13 @@ invalid_argument() {
 	exit 1
 }
 
+fix_build_id() { # For example, BUILD_ID="orabug12345" will become BUILD_ID=".orabug12345" as it should be
+	first_char="$(echo "${BUILD_ID:0:1}")"
+	if [[ $first_char != "." ]]; then
+		BUILD_ID=.$BUILD_ID
+	fi
+}
+
 POSITIONAL=()
 while [[ $# -gt 0 ]]
 do
@@ -48,6 +55,7 @@ do
 		;;
 		-i|--buildid)
 		BUILD_ID="$2"
+		fix_build_id
 		shift # past argument
 		shift # past value
 		;;
