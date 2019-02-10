@@ -1,0 +1,155 @@
+#!/usr/bin/env python
+
+import re
+import sys
+import time
+import datetime
+from argparse import ArgumentParser
+
+try:
+	from git import Repo
+except ImportError:
+	print "Please Install GitPython Package (e.g. yum install GitPython)"
+	sys.exit(1)
+
+def enum(*args):
+	enums = dict(zip(args, range(len(args))))
+	return type('Enum', (), enums)
+
+COLORES = [ '\x1b[1;31;40m',
+	   '\x1b[1;32;40m',
+	   '\x1b[0m'
+	  ]
+
+COLORES_PRINT = enum('RED_BEGIN', 'GREEN_BEGIN', 'COLOR_END')
+
+class git_find_order(object):
+
+	def get_parser(self):
+		if not hasattr(self, 'parser'):
+			self.parser = ArgumentParser()
+		return self.parser
+
+	def parse_args(self, args):
+		self.Parser.add_argument('-r', '--local_range', help='Local kernel tree range of commits', required=True)
+		self.Parser.add_argument('-l', '--linus_kernel_path', help='Path to upsream kernel tree', required=True)
+		self.Parser.add_argument('-u', '--uek_kernel_path', help='UEK-5 kernel tree path', required=True);
+		self.Parser.parse_args(namespace=self, args=args)
+
+	def get_upstream_repo(self):
+		if not hasattr(self, 'upstream_repo'):
+			self.upstream_repo = Repo(self.linus_kernel_path)
+		return self.upstream_repo
+
+	def get_local_repo(self):
+		if not hasattr(self, 'local_repo'):
+			self.local_repo = Repo(self.uek_kernel_path)
+		return self.local_repo
+
+	def get_upstream_commits(self):
+		return self.UpstreamRepo.iter_commits(no_merges=True, reverse=False)
+
+	def get_local_commits(self):
+		return self.LocalRepo.iter_commits(self.local_range, no_merges=True, reverse=False)
+
+	def get_upstream_tag(self, commit):
+		try:
+			tag = self.UpstreamRepo.git.describe(["--tags", "--contains" ,commit.hexsha])
+		except:
+			return "next branch"
+		return tag.partition("~")[0]
+
+	def review_order(self, sorted_upstream_dict):
+		local_commits = list(self.get_local_commits())
+		sorted_local_dict = dict()
+		sorted_upstream_dict_local = dict()
+		i = 0
+		err = 0
+
+		print "\n\033[4mChecking the order of the commits..\033[0m"
+		for commit in local_commits:
+			sorted_local_dict[i] = commit
+			i += 1
+		i = 0
+		for key, commit in sorted(sorted_upstream_dict.items()):
+			sorted_upstream_dict_local[i] = commit
+			i += 1
+		i = 0
+		for key, commit in sorted_local_dict.items():
+			if commit.summary != sorted_upstream_dict_local[i].summary:
+				print "%s # %s - Not in its right place!" % (commit, commit.summary)
+				err = 1
+				break
+			i += 1
+		if (err):
+			print COLORES[COLORES_PRINT.RED_BEGIN] + 'ERROR' + COLORES[COLORES_PRINT.COLOR_END] + \
+				": Please check and re-sort the commits according to the upstream log above and check again."
+		else:
+			print COLORES[COLORES_PRINT.GREEN_BEGIN] + 'SUCCESS' + COLORES[COLORES_PRINT.COLOR_END] + \
+				": The commits are properly ordered."
+
+	def get_sorted_list(self):
+		print "Creating upstream kernel log with all the local UEK patches (based on commit description comparing):"
+		upstream_commits = list(self.get_upstream_commits())
+		local_commits = list(self.get_local_commits())
+		print "Searching for total amount of %d patches" % (len(local_commits))
+		sorted_dict = dict()
+		for local_commit in local_commits:
+			local_description = (local_commit.summary).split(":", 1)[1]
+			key = 1
+			for upstream_commit in upstream_commits:
+				if local_description in upstream_commit.summary:
+					sorted_dict[key] = upstream_commit
+					break
+				key = key + 1
+
+		print "\033[4mFound %d/%d patches, log:\033[0m" % (len(sorted_dict), len(local_commits))
+		for key, commit in sorted(sorted_dict.items()):
+			print "%s # %s (%s, %s)" % (commit, commit.summary, self.get_upstream_tag(commit), \
+						    time.strftime("%a, %d %b %Y %H:%M:%S", time.gmtime(commit.committed_date)))
+
+		return sorted_dict
+
+	def review_patches(self):
+		print "\n\033[4mChecking the commits format (Orabug, cherry picked from, cherry-pick-repo etc.):\033[0m"
+		local_commits = list(self.get_local_commits())
+		err_cnt = 0
+		for commit in local_commits:
+			c_msg = str(commit.message)
+			if "cherry picked from" not in c_msg:
+				print "%s # %s	-	Missing cherry picked from <UPSTREAM_HASH>" % (commit, commit.summary)
+				err_cnt += 1
+			if "cherry-pick-repo" not in c_msg:
+				print "%s # %s	-	Missing cherry-pick-repo=<REPO>" % (commit, commit.summary)
+				err_cnt += 1
+			if "Orabug" not in c_msg:
+				print "%s # %s  -       Missing 'Orabug'/Missing Orabug #" % (commit, commit.summary)
+				err_cnt += 1
+			if "Signed-off-by: Erez Alfasi" not in c_msg:
+				print "%s # %s  -       Missing Signed-off-by: Erez Alfasi <ereza@mellanox.com>" % (commit, commit.summary)
+				err_cnt += 1
+			if "unmodified-from-upstream" in c_msg:
+				if "Conflicts:" in c_msg:
+					print "%s # %s  -       Has 'Conflicts' and yet has unmodified-from-upstream" % (commit, commit.summary)
+					err_cnt += 1
+		if (err_cnt):
+                        print COLORES[COLORES_PRINT.RED_BEGIN] + 'ERROR' + COLORES[COLORES_PRINT.COLOR_END] + \
+				": There's missing info in part of the patches (total %d errors)," % (err_cnt) + \
+				" please review the errors above and re-run this script"
+		else:
+			print COLORES[COLORES_PRINT.GREEN_BEGIN] + 'SUCCESS' + COLORES[COLORES_PRINT.COLOR_END] + \
+				": Patches are not missing info (cherry picked, cherry-pick-repo, Orabug #, Signed-off-by, etc.)"
+
+	def execute(self, args):
+		self.parse_args(args)
+		sorted_list = self.get_sorted_list()
+		rc = self.review_order(sorted_list)
+		self.review_patches()
+
+	Parser = property(get_parser)
+	UpstreamRepo = property(get_upstream_repo)
+	LocalRepo = property(get_local_repo)
+
+if __name__ == '__main__':
+	sorted_git_log = git_find_order()
+	sorted_git_log.execute(sys.argv[1:])
