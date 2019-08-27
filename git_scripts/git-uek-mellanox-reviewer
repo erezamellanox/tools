@@ -31,8 +31,8 @@ class git_find_order(object):
 		return self.parser
 
 	def parse_args(self, args):
-		self.Parser.add_argument('-r', '--local_range', help='Local kernel tree range of commits', required=True)
-		self.Parser.add_argument('-l', '--linus_kernel_path', help='Path to upsream kernel tree', required=True)
+		self.Parser.add_argument('-r', '--local_range', help='Local kernel tree range of commits (UEK hashes)', required=True)
+		self.Parser.add_argument('-l', '--linus_kernel_path', help='Path to the upstream kernel tree', required=True)
 		self.Parser.add_argument('-u', '--uek_kernel_path', help='UEK-5 kernel tree path', required=True);
 		self.Parser.parse_args(namespace=self, args=args)
 
@@ -95,7 +95,7 @@ class git_find_order(object):
 		print "Searching for total amount of %d patches" % (len(local_commits))
 		sorted_dict = dict()
 		for local_commit in local_commits:
-			local_description = (local_commit.summary).split(":", 1)[1]
+			local_description = local_commit.summary
 			key = 1
 			for upstream_commit in upstream_commits:
 				if local_description in upstream_commit.summary:
