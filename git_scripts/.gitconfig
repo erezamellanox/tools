@@ -9,11 +9,10 @@
 	suppresscc = self
 	thread = true
 	chainreplyto = false
-
 [color]
         ui = auto
 [color "branch"]
-	current = green
+	current = bold green
 	local = yellow
 	remote = red
 [color "diff"]
@@ -22,10 +21,9 @@
 	old = red bold
   	new = green bold
 [color "status"]
-  added = yellow
-  changed = green
-  untracked = cyan
-
+	added = yellow
+	changed = green
+	untracked = cyan
 [core]
         pager = less -r
         editor = vim
@@ -34,14 +32,13 @@
 	tool = vimdiff
 [diff "xxdiff"]
         command = xxdiff
-
 [log]
         decorate=true
 [color "decorate"]
         tag = blue
 [alias]
         wdiff = diff --word-diff=color --ignore-all-space
-        slog = log --oneline --no-merges
+        slog = log --no-merges --pretty=format:'%C(bold yellow)%h%Creset -%C(yellow)%d%Creset %s %C(cyan)(%cr) %C(bold white)<%an>%Creset' --abbrev-commit
 	co = checkout
 	ru = remote update
 	dc = describe --contains
@@ -58,7 +55,14 @@
 	rv = remote -v
 	acr = "!sh -c 'git ama; git clean -fd; git reset --hard'"
 	fp1 = format-patch -1
+	rup = "!sh -c ' git remote update; git pull'"
+	fp = format-patch
+	ca = commit --amend
+	rc = rebase --continue
+	lp = log -p
+	bd = b -D
 [push]
 	default = simple
 [http]
 	sslverify = false
+
